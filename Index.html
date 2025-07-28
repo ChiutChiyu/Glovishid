@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GloVish - Sosial Media</title>
+    <link rel="stylesheet" href="style.css"> </head>
+<body>
+    <header>
+        <nav>
+            <div class="logo">GloVish</div>
+            <ul>
+                <li><a href="#feed">Feed</a></li>
+                <li><a href="#upload">Upload</a></li>
+                <li><a href="#profile">Profil</a></li>
+                <li><a href="#chat">Chat</a></li>
+                <li><a href="#leaderboard">Leaderboard</a></li>
+                <li><a href="#logout" id="logoutBtn">Logout</a></li> <li><a href="#" id="darkModeToggle">Mode Gelap</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <main>
+        <section id="auth-section" class="active-section">
+            <h2>Selamat Datang di GloVish</h2>
+            <div class="auth-form">
+                <h3>Login</h3>
+                <form id="loginForm">
+                    <input type="email" placeholder="Email" required>
+                    <input type="password" placeholder="Password" required>
+                    <button type="submit">Login</button>
+                    <a href="#" id="forgotPassword">Lupa Password?</a>
+                </form>
+                <h3>Register</h3>
+                <form id="registerForm">
+                    <input type="text" placeholder="Username" required>
+                    <input type="email" placeholder="Email" required>
+                    <input type="password" placeholder="Password" required>
+                    <button type="submit">Daftar</button>
+                </form>
+            </div>
+        </section>
+
+        <section id="feed-section" style="display:none;">
+            <h2>Feed</h2>
+            <div class="post-container">
+                <p class="loading-message">Memuat postingan...</p>
+            </div>
+        </section>
+
+        <section id="upload-section" style="display:none;">
+            <h2>Upload Konten</h2>
+            <form id="uploadForm">
+                <input type="file" accept="image/*,video/*" required>
+                <input type="text" placeholder="Judul" required>
+                <textarea placeholder="Deskripsi (Opsional)"></textarea>
+                <button type="submit">Unggah</button>
+            </form>
+        </section>
+
+        <section id="profile-section" style="display:none;">
+            <h2>Profil Saya</h2>
+            <div class="profile-header">
+                <img src="https://via.placeholder.com/100" alt="Profile Picture" class="profile-pic" id="profilePicDisplay">
+                <input type="file" id="profilePicUpload" style="display: none;">
+                <button onclick="document.getElementById('profilePicUpload').click()">Ganti Foto Profil</button>
+                <h3 id="profileUsername">NamaPenggunaSaya</h3>
+                <input type="text" id="editUsernameInput" style="display: none;" placeholder="Username Baru">
+                <button id="editUsernameBtn">Edit Username</button>
+                <p>Follower: <span id="followerCount">0</span></p>
+                <p>Following: <span id="followingCount">0</span></p>
+            </div>
+            <div class="user-posts">
+                <h3>Postingan Saya</h3>
+                <p class="loading-message">Memuat postingan Anda...</p>
+                </div>
+        </section>
+
+        <section id="chat-section" style="display:none;">
+            <h2>Chat Pribadi</h2>
+            <input type="text" id="searchUserChat" placeholder="Cari pengguna...">
+            <div class="user-list">
+                <p class="info-message">Ketik untuk mencari pengguna...</p>
+            </div>
+            <div class="chat-window" style="display:none;">
+                <h3>Chat dengan <span id="currentChatUser"></span></h3>
+                <div class="messages">
+                    <p class="info-message">Mulai percakapan...</p>
+                </div>
+                <div class="chat-input-area">
+                    <input type="text" placeholder="Ketik pesan..." id="messageInput">
+                    <button id="sendMessageBtn">Kirim</button>
+                </div>
+            </div>
+        </section>
+
+        <section id="leaderboard-section" style="display:none;">
+            <h2>Leaderboard</h2>
+            <h3>Top 5 Likes Bulan Ini</h3>
+            <ol id="topLikesList">
+                <p class="loading-message">Memuat data...</p>
+                </ol>
+            <h3>Top 5 Followers</h3>
+            <ol id="topFollowersList">
+                <p class="loading-message">Memuat data...</p>
+                </ol>
+        </section>
+    </main>
+
+    <footer>
+        <p>&copy; 2025 GloVish. All rights reserved.</p>
+    </footer>
+
+    <script type="module">
+        import { initializeApp } from "firebase/app";
+        import { getAnalytics } from "firebase/analytics";
+        import { getAuth,
+                 createUserWithEmailAndPassword,
+                 signInWithEmailAndPassword,
+                 sendPasswordResetEmail,
+                 signOut,
+                 onAuthStateChanged
+               } from "firebase/auth";
+        import { getFirestore,
+                 doc, collection,
+                 addDoc, getDoc, getDocs,
+                 setDoc, updateDoc, deleteDoc,
+                 query, where, orderBy, limit,
+                 onSnapshot
+               } from "firebase/firestore";
+        import { getStorage,
+                 ref, uploadBytesResumable, getDownloadURL,
+                 deleteObject
+               } from "firebase/storage";
+
+        const firebaseConfig = {
+          apiKey: "AIzaSyAgOPD5DDtjExQaVeu6VLFI7CMP9i8VOQw",
+          authDomain: "projectchat01-d16bc.firebaseapp.com",
+          databaseURL: "https://projectchat01-d16bc-default-rtdb.firebaseio.com",
+          projectId: "projectchat01-d16bc",
+          storageBucket: "projectchat01-d16bc.appappspot.com",
+          messagingSenderId: "163313653543",
+          appId: "1:163313653543:web:cd1c193158d8a76811bb02",
+          measurementId: "G-VG80CY31FG"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        getAnalytics(app);
+
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+        const storage = getStorage(app);
+
+        // Mengekspos objek dan fungsi Firebase ke window global
+        window.firebase = {
+            auth: auth,
+            db: db,
+            storage: storage,
+            createUserWithEmailAndPassword: createUserWithEmailAndPassword,
+            signInWithEmailAndPassword: signInWithEmailAndPassword,
+            sendPasswordResetEmail: sendPasswordResetEmail,
+            signOut: signOut,
+            onAuthStateChanged: onAuthStateChanged,
+            doc: doc, collection: collection,
+            addDoc: addDoc, getDoc: getDoc, getDocs: getDocs,
+            setDoc: setDoc, updateDoc: updateDoc, deleteDoc: deleteDoc,
+            query: query, where: where, orderBy: orderBy, limit: limit,
+            onSnapshot: onSnapshot,
+            ref: ref, uploadBytesResumable: uploadBytesResumable, getDownloadURL: getDownloadURL,
+            deleteObject: deleteObject
+        };
+
+        console.log("Firebase initialized and all services available!");
+    </script>
+    <script src="script.js"></script>
+</body>
+</html>
